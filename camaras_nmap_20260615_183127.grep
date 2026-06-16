@@ -1,0 +1,20 @@
+# Nmap 7.94SVN scan initiated Mon Jun 15 18:31:28 2026 as: nmap -sS -Pn -p 80,443,554,8000,8080,37777 --open --min-rate 1000 -oN camaras_nmap_20260615_183127.txt -oG camaras_nmap_20260615_183127.grep 192.168.100.0/24
+Host: 192.168.100.1 ()	Status: Up
+Host: 192.168.100.1 ()	Ports: 80/open/tcp//http///	Ignored State: closed (5)
+Host: 192.168.100.18 ()	Status: Up
+Host: 192.168.100.18 ()	Ports: 554/open/tcp//rtsp///	Ignored State: closed (5)
+Host: 192.168.100.20 ()	Status: Up
+Host: 192.168.100.20 ()	Ports: 554/open/tcp//rtsp///	Ignored State: closed (5)
+Host: 192.168.100.45 ()	Status: Up
+Host: 192.168.100.45 ()	Ports: 554/open/tcp//rtsp///	Ignored State: closed (5)
+Host: 192.168.100.93 ()	Status: Up
+Host: 192.168.100.93 ()	Ports: 80/open/tcp//http///, 554/open/tcp//rtsp///	Ignored State: closed (4)
+Host: 192.168.100.94 ()	Status: Up
+Host: 192.168.100.94 ()	Ports: 8080/open/tcp//http-proxy///	Ignored State: closed (5)
+Host: 192.168.100.146 ()	Status: Up
+Host: 192.168.100.146 ()	Ports: 80/open/tcp//http///	Ignored State: closed (5)
+Host: 192.168.100.205 ()	Status: Up
+Host: 192.168.100.205 ()	Ports: 80/open/tcp//http///, 554/open/tcp//rtsp///	Ignored State: closed (4)
+Host: 192.168.100.234 ()	Status: Up
+Host: 192.168.100.234 ()	Ports: 554/open/tcp//rtsp///	Ignored State: closed (5)
+# Nmap done at Mon Jun 15 18:37:04 2026 -- 256 IP addresses (256 hosts up) scanned in 337.07 seconds

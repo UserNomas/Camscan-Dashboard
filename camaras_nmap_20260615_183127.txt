@@ -1,0 +1,58 @@
+# Nmap 7.94SVN scan initiated Mon Jun 15 18:31:28 2026 as: nmap -sS -Pn -p 80,443,554,8000,8080,37777 --open --min-rate 1000 -oN camaras_nmap_20260615_183127.txt -oG camaras_nmap_20260615_183127.grep 192.168.100.0/24
+Nmap scan report for 192.168.100.1
+Host is up (0.0050s latency).
+Not shown: 5 closed tcp ports (reset)
+PORT   STATE SERVICE
+80/tcp open  http
+
+Nmap scan report for 192.168.100.18
+Host is up (0.026s latency).
+Not shown: 5 closed tcp ports (reset)
+PORT    STATE SERVICE
+554/tcp open  rtsp
+
+Nmap scan report for 192.168.100.20
+Host is up (0.10s latency).
+Not shown: 5 closed tcp ports (reset)
+PORT    STATE SERVICE
+554/tcp open  rtsp
+
+Nmap scan report for 192.168.100.45
+Host is up (0.041s latency).
+Not shown: 5 closed tcp ports (reset)
+PORT    STATE SERVICE
+554/tcp open  rtsp
+
+Nmap scan report for 192.168.100.93
+Host is up (0.035s latency).
+Not shown: 4 closed tcp ports (reset)
+PORT    STATE SERVICE
+80/tcp  open  http
+554/tcp open  rtsp
+
+Nmap scan report for 192.168.100.94
+Host is up (0.011s latency).
+Not shown: 5 closed tcp ports (reset)
+PORT     STATE SERVICE
+8080/tcp open  http-proxy
+
+Nmap scan report for 192.168.100.146
+Host is up (0.10s latency).
+Not shown: 5 closed tcp ports (reset)
+PORT   STATE SERVICE
+80/tcp open  http
+
+Nmap scan report for 192.168.100.205
+Host is up (0.091s latency).
+Not shown: 4 closed tcp ports (reset)
+PORT    STATE SERVICE
+80/tcp  open  http
+554/tcp open  rtsp
+
+Nmap scan report for 192.168.100.234
+Host is up (0.012s latency).
+Not shown: 5 closed tcp ports (reset)
+PORT    STATE SERVICE
+554/tcp open  rtsp
+
+# Nmap done at Mon Jun 15 18:37:04 2026 -- 256 IP addresses (256 hosts up) scanned in 337.07 seconds
