@@ -88,6 +88,7 @@ main { padding: 20px; }
   <div class="actions">
     <button onclick="refreshData()">Refresh</button>
     <a class="button" href="/grid" target="_blank">WebRTC Grid</a>
+    <a class="button" href="/history" target="_blank">History</a>
     <a class="button secondary" href="/help" target="_blank">Help</a>
   </div>
 </header>
@@ -151,7 +152,8 @@ function renderCameras(data) {
     if (camera.RTSPURL) rtsp += 1;
     const connectionTags = buildConnectionTags(camera);
     const quality = getQualityLabel(camera);
-    const videoPreview = camera.RTSPURL ? `<div class="preview">RTSP stream ready</div>` : `<div class="preview">No RTSP URL</div>`;
+    const thumbnail = camera.ThumbnailURL ? `<img src="${camera.ThumbnailURL}" alt="thumbnail" style="width:100%;height:190px;object-fit:cover;display:block;" />` : `<div class="preview">No RTSP URL</div>`;
+    const videoPreview = camera.RTSPURL ? thumbnail : thumbnail;
     const webrtcButton = camera.RTSPURL ? `<a class="button" href="/viewer?rtsp=${encodeURIComponent(btoa(camera.RTSPURL))}" target="_blank">WebRTC</a>` : '';
     const mjpegButton = camera.RTSPURL ? `<a class="button secondary" href="/mjpeg?rtsp=${encodeURIComponent(btoa(camera.RTSPURL))}" target="_blank">MJPEG</a>` : '';
     const copyButton = camera.RTSPURL ? `<button class="button secondary mini" onclick="copyText('${encodeURIComponent(camera.RTSPURL)}')">Copy RTSP</button>` : '';
@@ -521,6 +523,10 @@ video {{ width: 100%; height: 100%; object-fit: cover; }}
 .badge.down {{ background: #dc2626; }}
 .badge.rtsp {{ background: #2563eb; }}
 #statusBar {{ padding: 12px 18px; font-size: 0.95rem; color: #e2e8f0; }}
+#overlay {{ position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 100; }}
+#overlay.active {{ display: flex; }}
+#overlay video {{ width: min(100%, 960px); max-height: 80vh; border-radius: 16px; background: #000; }}
+#overlay .close-btn {{ margin-top: 14px; padding: 10px 16px; background: #2563eb; border: none; border-radius: 10px; color: white; cursor: pointer; }}
 </style>
 </head>
 <body>
@@ -530,6 +536,10 @@ video {{ width: 100%; height: 100%; object-fit: cover; }}
 </header>
 <div id='statusBar'>Loading cameras...</div>
 <div id='grid'></div>
+<div id='overlay'>
+  <video id='overlayVideo' autoplay playsinline controls></video>
+  <button class='close-btn' onclick='closeOverlay()'>Close Preview</button>
+</div>
 <script>
 const signalUrl = '/offer';
 const grid = document.getElementById('grid');
@@ -565,8 +575,15 @@ function createCard(camera, index) {{
   quality.textContent = getQualityLabel(camera.RTSPURL);
   const info = document.createElement('span');
   info.textContent = camera.RTSPURL;
+  const previewButton = document.createElement('button');
+  previewButton.className = 'badge';
+  previewButton.textContent = 'Single View';
+  previewButton.style.background = '#475569';
+  previewButton.style.cursor = 'pointer';
+  previewButton.onclick = () => openSingleView(camera.RTSPURL, camera.IP, video);
   footer.appendChild(quality);
   footer.appendChild(info);
+  footer.appendChild(previewButton);
   card.appendChild(header);
   card.appendChild(videoWrap);
   card.appendChild(footer);
@@ -596,9 +613,99 @@ async function createPeerConnection(rtspUrl, videoEl, index) {{
   const answer = await response.json();
   await pc.setRemoteDescription(new RTCSessionDescription(answer));
 }}
+function openSingleView(rtspUrl, ip, sourceVideo) {{
+  const overlay = document.getElementById('overlay');
+  const overlayVideo = document.getElementById('overlayVideo');
+  overlay.classList.add('active');
+  overlayVideo.srcObject = sourceVideo.srcObject || null;
+  if (!overlayVideo.srcObject && rtspUrl) {{
+    createPeerConnection(rtspUrl, overlayVideo, `overlay-${ip}`);
+  }}
+}}
+function closeOverlay() {{
+  const overlay = document.getElementById('overlay');
+  const overlayVideo = document.getElementById('overlayVideo');
+  overlayVideo.srcObject = null;
+  overlay.classList.remove('active');
+}}
 loadCameras().catch(err => {{
   console.error(err);
   statusBar.textContent = 'Failed to load grid preview: ' + err.message;
+}});
+</script>
+</body>
+</html>
+"""
+
+    def build_history_page(self):
+        return """
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>Camera History</title>
+<style>
+body {{ margin: 0; font-family: Inter, system-ui, sans-serif; background: #f8fafc; color: #111827; }}
+header {{ padding: 20px; display: flex; justify-content: space-between; align-items: center; background: #1f2937; color: white; }}
+main {{ padding: 20px; }}
+table {{ width: 100%; border-collapse: collapse; margin-top: 18px; }}
+th, td {{ padding: 12px 10px; border: 1px solid #cbd5e1; text-align: left; }}
+th {{ background: #e2e8f0; }}
+tr:nth-child(even) {{ background: white; }}
+.badge {{ display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; color: white; }}
+.badge.up {{ background: #16a34a; }}
+.badge.down {{ background: #dc2626; }}
+.badge.standard {{ background: #3b82f6; }}
+.badge.high {{ background: #a855f7; }}
+.badge.low {{ background: #f59e0b; color: #111827; }}
+</style>
+</head>
+<body>
+<header>
+  <h1>Camera Health History</h1>
+  <a href='/' style='color:#fff;text-decoration:none;background:#2563eb;padding:10px 14px;border-radius:10px;'>Dashboard</a>
+</header>
+<main>
+  <p>Recent camera health checks and stream quality events are persisted to <code>camera_history.json</code>.</p>
+  <div id='historyContainer'>Loading history...</div>
+</main>
+<script>
+async function loadHistory() {{
+  const res = await fetch('/api/history');
+  const rows = await res.json();
+  const container = document.getElementById('historyContainer');
+  if (!rows.length) {{
+    container.innerHTML = '<p>No history recorded yet.</p>';
+    return;
+  }}
+  const table = document.createElement('table');
+  const headerRow = document.createElement('tr');
+  ['Time', 'IP', 'Status', 'Quality', 'RTSP', 'Open Ports'].forEach(text => {{
+    const th = document.createElement('th');
+    th.textContent = text;
+    headerRow.appendChild(th);
+  }});
+  table.appendChild(headerRow);
+  rows.slice().reverse().forEach(entry => {{
+    const tr = document.createElement('tr');
+    const status = entry.up ? '<span class="badge up">UP</span>' : '<span class="badge down">DOWN</span>';
+    const quality = (entry.Quality || 'Unknown').toLowerCase();
+    tr.innerHTML = `
+      <td>${entry.timestamp}</td>
+      <td>${entry.IP}</td>
+      <td>${status}</td>
+      <td><span class="badge ${quality}">${entry.Quality || 'Unknown'}</span></td>
+      <td>${entry.RTSPURL ? '<code>' + entry.RTSPURL + '</code>' : 'N/A'}</td>
+      <td>${entry.OpenPorts || '—'}</td>
+    `;
+    table.appendChild(tr);
+  }});
+  container.innerHTML = '';
+  container.appendChild(table);
+}}
+loadHistory().catch(err => {{
+  console.error(err);
+  document.getElementById('historyContainer').innerHTML = '<p>Failed to load history.</p>';
 }});
 </script>
 </body>
@@ -711,4 +818,50 @@ loadCameras().catch(err => {{
             return future.result(timeout=20)
         except Exception as exc:
             print('WebRTC answer failed:', exc, file=sys.stderr)
-            return No
+            return None
+
+    def decode_param(self, value):
+        try:
+            return base64.b64decode(urllib.parse.unquote_plus(value)).decode('utf-8')
+        except Exception:
+            return ''
+
+    def log_message(self, format, *args):
+        return
+
+
+def base64_encode(value):
+    return base64.b64encode(value.encode('utf-8')).decode('ascii')
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Camera dashboard v2 server.')
+    parser.add_argument('--csv', default=None, help='CSV file generated by scan_cameras.py')
+    parser.add_argument('--port', type=int, default=DEFAULT_PORT, help='HTTP port')
+    return parser.parse_args()
+
+
+def find_latest_csv(search_dir):
+    files = [f for f in os.listdir(search_dir) if f.startswith('camaras_') and f.endswith('.csv')]
+    files.sort(key=lambda f: os.path.getmtime(os.path.join(search_dir, f)), reverse=True)
+    return os.path.join(search_dir, files[0]) if files else ''
+
+
+def main():
+    args = parse_args()
+    csv_path = args.csv or find_latest_csv(os.getcwd())
+    if not csv_path or not os.path.isfile(csv_path):
+        print('No camera CSV found. Generate scan output first or pass --csv <file>.')
+        sys.exit(1)
+    print(f'Using camera inventory: {csv_path}')
+    print(f'Starting dashboard on http://127.0.0.1:{args.port}/')
+    server = CameraDashboardServer(('0.0.0.0', args.port), DashboardHandler, csv_path)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print('\nShutting down.')
+        server.shutdown()
+
+
+if __name__ == '__main__':
+    main()
